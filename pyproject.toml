@@ -21,7 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "typer[all]>=0.9.0",
-    "rich>=13.0.0",  # For better terminal output, commonly used with Typer
+    "rich>=13.0.0",
 ]
 
 [project.scripts]
@@ -32,6 +32,7 @@ dev = [
     "pytest>=7.0",
     "ruff>=0.1.0",
     "mypy>=1.0.0",
+    "types-setuptools",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -40,7 +41,9 @@ packages = ["src/awesome_cli"]
 [tool.ruff]
 line-length = 88
 target-version = "py311"
-select = ["E", "F", "I", "B"]  # pycodestyle, pyflakes, isort, flake8-bugbear
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
 
 [tool.mypy]
 strict = true

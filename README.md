@@ -2,54 +2,64 @@
 
 A production-ready Python CLI application scaffold.
 
+## Description
+
+Awesome CLI is a robust command-line interface tool built with Python, utilizing modern best practices and libraries like Typer and Rich.
+
 ## Installation
 
-To install the application in editable mode (useful for development), run:
+You can install the package in editable mode for development:
 
 ```bash
 pip install -e .
 ```
 
-To install dev dependencies (tests, linting):
-
-```bash
-pip install -e ".[dev]"
-```
-
 ## Usage
 
-You can run the CLI directly using the `awesome-cli` command (after installation) or via `python -m awesome_cli`.
+After installation, the `awesome-cli` command will be available.
 
-### General Help
+### Basic Commands
 
+Get help:
 ```bash
 awesome-cli --help
 ```
 
-### Initialize Configuration
-
-Initialize the application state (e.g., creates default config).
-
+Initialize the application:
 ```bash
 awesome-cli init
 ```
 
-### Run a Job
+Run a job:
+```bash
+awesome-cli run --name my_job
+```
 
-Run the main application logic.
+### Running via `python -m`
+
+You can also run the CLI using the module name:
 
 ```bash
-awesome-cli run --verbose --name "MyJob"
+python -m awesome_cli run --name my_job --verbose
 ```
 
 ## Development
 
 ### Running Tests
 
-We use `pytest` for testing.
+Run the test suite with `pytest`:
 
 ```bash
 pytest
+```
+
+### Linting and Formatting
+
+We use `ruff` for linting and formatting.
+
+```bash
+ruff check .
+ruff format .
 ```
 
 ### Type Checking
@@ -58,12 +68,4 @@ We use `mypy` for static type checking.
 
 ```bash
 mypy src
-```
-
-### Linting
-
-We use `ruff` for linting.
-
-```bash
-ruff check src tests
 ```
