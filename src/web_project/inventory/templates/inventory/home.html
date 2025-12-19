@@ -1,0 +1,41 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Dashboard - Awesome{% endblock %}
+
+{% block content %}
+    <h1>Dashboard</h1>
+    <p>Welcome to the project overview.</p>
+
+    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+        <div style="background: #e9ecef; padding: 1rem; border-radius: 4px; flex: 1;">
+            <h2>Total Projects</h2>
+            <p style="font-size: 2rem; font-weight: bold;">{{ total_items }}</p>
+        </div>
+        <div style="background: #e9ecef; padding: 1rem; border-radius: 4px; flex: 1;">
+            <h2>Active Projects</h2>
+            <p style="font-size: 2rem; font-weight: bold; color: green;">{{ active_items }}</p>
+        </div>
+    </div>
+
+    <h2>Recent Items</h2>
+    <ul>
+        {% for item in recent_items %}
+            <li>
+                <a href="{% url 'inventory:item_detail' item.pk %}">{{ item.name }}</a>
+                <span style="color: #777;">({{ item.status }})</span>
+            </li>
+        {% empty %}
+            <li>No items found.</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'inventory:item_list' %}" class="button">View All Items</a>
+
+    <!--
+      Note for Next.js migration:
+      This dashboard currently uses server-side rendering.
+      To migrate to Next.js, expose an API endpoint (e.g., /api/dashboard/)
+      that returns JSON: { total_items: 5, active_items: 2, recent_items: [...] }.
+      The React component would fetch this on mount or via getStaticProps/getServerSideProps.
+    -->
+{% endblock %}
