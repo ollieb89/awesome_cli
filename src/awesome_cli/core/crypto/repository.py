@@ -38,9 +38,33 @@ class CryptoAssetRepository:
                     data = json.load(f)
                     # Convert list to dict keyed by symbol for fast lookup
                     if isinstance(data, list):
-                        self.assets = {item["symbol"]: item for item in data}
+                        assets: Dict[str, Dict] = {}
+                        for index, item in enumerate(data):
+                            if not isinstance(item, dict):
+                                logger.warning(
+                                    "Skipping non-dict asset at index %s in %s",
+                                    index,
+                                    self.storage_path,
+                                )
+                                continue
+                            symbol = item.get("symbol")
+                            if not symbol:
+                                logger.warning(
+                                    'Skipping asset without "symbol" at index %s in %s',
+                                    index,
+                                    self.storage_path,
+                                )
+                                continue
+                            assets[symbol] = item
+                        self.assets = assets
                     elif isinstance(data, dict):
                         self.assets = data
+                    else:
+                        logger.warning(
+                            "Unexpected data format in %s: %s",
+                            self.storage_path,
+                            type(data).__name__,
+                        )
             logger.info(f"Loaded {len(self.assets)} assets from {self.storage_path}")
         except Exception as e:
             logger.error(f"Failed to load assets from storage: {e}")
@@ -52,10 +76,13 @@ class CryptoAssetRepository:
             self.storage_path.parent.mkdir(parents=True, exist_ok=True)
 
             with self._lock:
-                with self.storage_path.open("w", encoding="utf-8") as f:
-                    # Save as list values
-                    json.dump(list(self.assets.values()), f, indent=2)
-            logger.info(f"Saved {len(self.assets)} assets to {self.storage_path}")
+                # Create a snapshot of the assets inside the lock
+                assets_snapshot = list(self.assets.values())
+            
+            # Write to file outside the lock to avoid holding it during I/O
+            with self.storage_path.open("w", encoding="utf-8") as f:
+                json.dump(assets_snapshot, f, indent=2)
+            logger.info(f"Saved {len(assets_snapshot)} assets to {self.storage_path}")
         except Exception as e:
             logger.error(f"Failed to save assets to storage: {e}")
 
@@ -66,7 +93,7 @@ class CryptoAssetRepository:
                 symbol = asset.get("symbol")
                 if symbol:
                     self.assets[symbol] = asset
-        # Auto-save after updates
+        # Auto-save after updates (lock is released before save)
         self.save()
 
     def get_all(self) -> List[Dict]:

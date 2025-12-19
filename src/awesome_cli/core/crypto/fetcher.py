@@ -17,6 +17,7 @@ Rationale for using CoinGecko:
 
 import logging
 import time
+from threading import Lock
 from typing import List, Optional, Dict, Any
 from urllib.parse import urljoin
 
@@ -33,6 +34,7 @@ class CryptoDataFetcher:
     """
     Fetcher for cryptocurrency data using CoinGecko API.
     Handles rate limiting, retries, and response parsing.
+    Thread-safe for concurrent requests.
     """
 
     def __init__(self, settings: CryptoSettings):
@@ -44,6 +46,7 @@ class CryptoDataFetcher:
         self.rate_limit_delay = 60.0 / settings.coingecko_rate_limit_requests  # Simple spacing
         self.session = self._create_session()
         self._last_request_time = 0.0
+        self._rate_limit_lock = Lock()
 
     def _create_session(self) -> requests.Session:
         """Create a requests session with retry logic."""
@@ -61,11 +64,12 @@ class CryptoDataFetcher:
 
     def _wait_for_rate_limit(self):
         """Ensure we respect the rate limit by sleeping if necessary."""
-        current_time = time.time()
-        elapsed = current_time - self._last_request_time
-        if elapsed < self.rate_limit_delay:
-            time.sleep(self.rate_limit_delay - elapsed)
-        self._last_request_time = time.time()
+        with self._rate_limit_lock:
+            current_time = time.time()
+            elapsed = current_time - self._last_request_time
+            if elapsed < self.rate_limit_delay:
+                time.sleep(self.rate_limit_delay - elapsed)
+            self._last_request_time = time.time()
 
     def fetch_top_coins(self, limit: int = 50, currency: str = "usd") -> List[Dict[str, Any]]:
         """
@@ -102,7 +106,7 @@ class CryptoDataFetcher:
             return self._normalize_response(data)
 
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 429:
+            if e.response is not None and e.response.status_code == 429:
                 logger.warning("Rate limit exceeded (429).")
             logger.error(f"HTTP error occurred: {e}")
             raise

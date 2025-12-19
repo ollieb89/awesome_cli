@@ -1,11 +1,9 @@
-import json
 import unittest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 import tempfile
 import shutil
 
-import requests
 from awesome_cli.config import CryptoSettings
 from awesome_cli.core.crypto.fetcher import CryptoDataFetcher
 from awesome_cli.core.crypto.cache import CacheManager
