@@ -58,6 +58,7 @@ def main(
 
     if verbose:
         logger.debug(f"Settings loaded: {settings}")
+        console.print(f"[dim]Loaded settings for env: {settings.env}[/dim]")
 
 @app.command()
 def init(

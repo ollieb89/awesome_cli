@@ -57,6 +57,9 @@ class Settings:
     log_level: str = "INFO"
     config_path: Optional[Path] = None
     app_name: str = "AwesomeCLI"
+
+    # Example specific setting
+    max_retries: int = 3
     crypto: CryptoSettings = field(default_factory=CryptoSettings)
 
 def load_settings(config_path: Optional[str] = None) -> Settings:
@@ -84,10 +87,11 @@ def load_settings(config_path: Optional[str] = None) -> Settings:
                         # Extract top level settings
                         for k, v in file_data.items():
                             if k != "crypto":
-                                defaults[k] = v
+                                settings_dict[k] = v
                         # Extract crypto settings
                         if "crypto" in file_data:
-                            crypto_defaults.update(file_data["crypto"])
+                            if "crypto" in settings_dict and isinstance(settings_dict["crypto"], dict):
+                                deep_merge(settings_dict["crypto"], file_data["crypto"])
             except Exception as e:
                 logger.warning(f"Failed to load config file {path}: {e}")
 
