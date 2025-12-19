@@ -1,0 +1,11 @@
+<div class="asset-detail-container">
+  <h2>{{ symbol }} Performance</h2>
+  <div style="height: 400px;" *ngIf="chartData$ | async as chartData">
+    <canvas baseChart
+      [type]="'line'"
+      [data]="chartData"
+      [options]="chartOptions"
+      [legend]="true">
+    </canvas>
+  </div>
+</div>
