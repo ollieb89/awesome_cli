@@ -81,13 +81,7 @@ def load_settings(config_path: Optional[str] = None) -> Settings:
                 with path.open("r", encoding="utf-8") as f:
                     file_data = json.load(f)
                     if isinstance(file_data, dict):
-                        # Extract top level settings
-                        for k, v in file_data.items():
-                            if k != "crypto":
-                                defaults[k] = v
-                        # Extract crypto settings
-                        if "crypto" in file_data:
-                            crypto_defaults.update(file_data["crypto"])
+                        deep_merge(settings_dict, file_data)
             except Exception as e:
                 logger.warning(f"Failed to load config file {path}: {e}")
 
