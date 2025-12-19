@@ -18,7 +18,7 @@ Rationale for using CoinGecko:
 import logging
 import time
 from threading import Lock
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 
 import requests
@@ -43,7 +43,8 @@ class CryptoDataFetcher:
             self.base_url += "/"
 
         self.timeout = settings.coingecko_request_timeout
-        self.rate_limit_delay = 60.0 / settings.coingecko_rate_limit_requests  # Simple spacing
+        # Simple spacing between requests
+        self.rate_limit_delay = 60.0 / settings.coingecko_rate_limit_requests
         self.session = self._create_session()
         self._last_request_time = 0.0
         self._rate_limit_lock = Lock()
@@ -71,7 +72,9 @@ class CryptoDataFetcher:
                 time.sleep(self.rate_limit_delay - elapsed)
             self._last_request_time = time.time()
 
-    def fetch_top_coins(self, limit: int = 50, currency: str = "usd") -> List[Dict[str, Any]]:
+    def fetch_top_coins(
+        self, limit: int = 50, currency: str = "usd"
+    ) -> List[Dict[str, Any]]:
         """
         Fetch top coins by trading volume.
 
@@ -141,15 +144,21 @@ class CryptoDataFetcher:
                     "total_volume": self._to_float(item.get("total_volume")),
                     "high_24h": self._to_float(item.get("high_24h")),
                     "low_24h": self._to_float(item.get("low_24h")),
-                    "price_change_percentage_24h": self._to_float(item.get("price_change_percentage_24h")),
-                    "price_change_percentage_7d_in_currency": self._to_float(item.get("price_change_percentage_7d_in_currency")),
+                    "price_change_percentage_24h": self._to_float(
+                        item.get("price_change_percentage_24h")
+                    ),
+                    "price_change_percentage_7d_in_currency": self._to_float(
+                        item.get("price_change_percentage_7d_in_currency")
+                    ),
                     "ath": self._to_float(item.get("ath")),
                     "atl": self._to_float(item.get("atl")),
                     "last_updated": item.get("last_updated"),
                 }
                 normalized_data.append(coin)
             except Exception as e:
-                logger.warning(f"Skipping malformed item {item.get('id', 'unknown')}: {e}")
+                logger.warning(
+                    f"Skipping malformed item {item.get('id', 'unknown')}: {e}"
+                )
                 continue
 
         return normalized_data

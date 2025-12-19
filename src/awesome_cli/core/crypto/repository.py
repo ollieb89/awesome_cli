@@ -9,8 +9,8 @@ Currently supports in-memory storage backed by a JSON file for persistence.
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
 from threading import Lock
+from typing import Dict, List, Optional
 
 from awesome_cli.config import CryptoSettings
 

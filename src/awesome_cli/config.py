@@ -69,21 +69,49 @@ def load_settings(config_path: Optional[str] = None) -> Settings:
     # Helper function to safely convert to int with fallback
     def safe_int(env_var: str, default: int) -> int:
         try:
-            return int(os.getenv(env_var, crypto_defaults.get(env_var.lower().replace("awesome_cli_", ""), default)))
+            env_key = env_var.lower().replace("awesome_cli_", "")
+            fallback = crypto_defaults.get(env_key, default)
+            return int(os.getenv(env_var, fallback))
         except (ValueError, TypeError):
             return default
     
     # Crypto environment variables
+    coingecko_base_url = os.getenv(
+        "AWESOME_CLI_COINGECKO_API_BASE_URL",
+        crypto_defaults.get(
+            "coingecko_api_base_url", "https://api.coingecko.com/api/v3"
+        ),
+    )
+    storage_path = os.getenv(
+        "AWESOME_CLI_STORAGE_PATH",
+        crypto_defaults.get("storage_path", "data/crypto_assets.json"),
+    )
+    redis_url = os.getenv(
+        "AWESOME_CLI_REDIS_URL", crypto_defaults.get("redis_url", None)
+    )
+    use_redis_env = os.getenv(
+        "AWESOME_CLI_USE_REDIS",
+        str(crypto_defaults.get("use_redis", False)),
+    )
+    
     crypto_settings = CryptoSettings(
-        coingecko_api_base_url=os.getenv("AWESOME_CLI_COINGECKO_API_BASE_URL", crypto_defaults.get("coingecko_api_base_url", "https://api.coingecko.com/api/v3")),
-        coingecko_request_timeout=safe_int("AWESOME_CLI_COINGECKO_REQUEST_TIMEOUT", 10),
-        coingecko_rate_limit_requests=safe_int("AWESOME_CLI_COINGECKO_RATE_LIMIT_REQUESTS", 50),
+        coingecko_api_base_url=coingecko_base_url,
+        coingecko_request_timeout=safe_int(
+            "AWESOME_CLI_COINGECKO_REQUEST_TIMEOUT", 10
+        ),
+        coingecko_rate_limit_requests=safe_int(
+            "AWESOME_CLI_COINGECKO_RATE_LIMIT_REQUESTS", 50
+        ),
         cache_ttl_minutes=safe_int("AWESOME_CLI_CACHE_TTL_MINUTES", 5),
-        cache_ttl_metadata_hours=safe_int("AWESOME_CLI_CACHE_TTL_METADATA_HOURS", 24),
-        scheduler_interval_minutes=safe_int("AWESOME_CLI_SCHEDULER_INTERVAL_MINUTES", 5),
-        storage_path=os.getenv("AWESOME_CLI_STORAGE_PATH", crypto_defaults.get("storage_path", "data/crypto_assets.json")),
-        redis_url=os.getenv("AWESOME_CLI_REDIS_URL", crypto_defaults.get("redis_url", None)),
-        use_redis=os.getenv("AWESOME_CLI_USE_REDIS", str(crypto_defaults.get("use_redis", False))).lower() == "true",
+        cache_ttl_metadata_hours=safe_int(
+            "AWESOME_CLI_CACHE_TTL_METADATA_HOURS", 24
+        ),
+        scheduler_interval_minutes=safe_int(
+            "AWESOME_CLI_SCHEDULER_INTERVAL_MINUTES", 5
+        ),
+        storage_path=storage_path,
+        redis_url=redis_url,
+        use_redis=use_redis_env.lower() == "true",
     )
 
     return Settings(
