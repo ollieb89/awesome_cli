@@ -5,8 +5,21 @@ import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type, TypeVar
 
+T = TypeVar('T')
+
+def get_env_safe(key: str, default: T, cast: Type[T]) -> T:
+    """Get environment variable with safe casting."""
+    value = os.getenv(key)
+    if value is None:
+        return default
+    try:
+        if cast == bool:
+            return str(value).lower() in ("true", "1", "yes")  # type: ignore
+        return cast(value)
+    except (ValueError, TypeError):
+        return default
 
 @dataclass
 class CryptoSettings:
@@ -69,14 +82,14 @@ def load_settings(config_path: Optional[str] = None) -> Settings:
     # Crypto environment variables
     crypto_settings = CryptoSettings(
         coingecko_api_base_url=os.getenv("AWESOME_CLI_COINGECKO_API_BASE_URL", crypto_defaults.get("coingecko_api_base_url", "https://api.coingecko.com/api/v3")),
-        coingecko_request_timeout=int(os.getenv("AWESOME_CLI_COINGECKO_REQUEST_TIMEOUT", crypto_defaults.get("coingecko_request_timeout", 10))),
-        coingecko_rate_limit_requests=int(os.getenv("AWESOME_CLI_COINGECKO_RATE_LIMIT_REQUESTS", crypto_defaults.get("coingecko_rate_limit_requests", 50))),
-        cache_ttl_minutes=int(os.getenv("AWESOME_CLI_CACHE_TTL_MINUTES", crypto_defaults.get("cache_ttl_minutes", 5))),
-        cache_ttl_metadata_hours=int(os.getenv("AWESOME_CLI_CACHE_TTL_METADATA_HOURS", crypto_defaults.get("cache_ttl_metadata_hours", 24))),
-        scheduler_interval_minutes=int(os.getenv("AWESOME_CLI_SCHEDULER_INTERVAL_MINUTES", crypto_defaults.get("scheduler_interval_minutes", 5))),
+        coingecko_request_timeout=get_env_safe("AWESOME_CLI_COINGECKO_REQUEST_TIMEOUT", crypto_defaults.get("coingecko_request_timeout", 10), int),
+        coingecko_rate_limit_requests=get_env_safe("AWESOME_CLI_COINGECKO_RATE_LIMIT_REQUESTS", crypto_defaults.get("coingecko_rate_limit_requests", 50), int),
+        cache_ttl_minutes=get_env_safe("AWESOME_CLI_CACHE_TTL_MINUTES", crypto_defaults.get("cache_ttl_minutes", 5), int),
+        cache_ttl_metadata_hours=get_env_safe("AWESOME_CLI_CACHE_TTL_METADATA_HOURS", crypto_defaults.get("cache_ttl_metadata_hours", 24), int),
+        scheduler_interval_minutes=get_env_safe("AWESOME_CLI_SCHEDULER_INTERVAL_MINUTES", crypto_defaults.get("scheduler_interval_minutes", 5), int),
         storage_path=os.getenv("AWESOME_CLI_STORAGE_PATH", crypto_defaults.get("storage_path", "data/crypto_assets.json")),
         redis_url=os.getenv("AWESOME_CLI_REDIS_URL", crypto_defaults.get("redis_url", None)),
-        use_redis=os.getenv("AWESOME_CLI_USE_REDIS", str(crypto_defaults.get("use_redis", False))).lower() == "true",
+        use_redis=get_env_safe("AWESOME_CLI_USE_REDIS", crypto_defaults.get("use_redis", False), bool),
     )
 
     return Settings(

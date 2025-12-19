@@ -1,4 +1,3 @@
-import json
 import unittest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
@@ -160,6 +159,37 @@ class TestCryptoDataScheduler(unittest.TestCase):
 
         mock_fetcher.fetch_top_coins.assert_called_once()
         mock_repo.upsert.assert_called_once_with([{"symbol": "BTC"}])
+
+    def test_scheduler_lifecycle(self):
+        settings = CryptoSettings(scheduler_interval_minutes=1)
+        mock_fetcher = MagicMock()
+        mock_repo = MagicMock()
+
+        scheduler = CryptoDataScheduler(settings, mock_fetcher, mock_repo)
+
+        # Test start
+        scheduler.start()
+        self.assertTrue(scheduler._thread.is_alive())
+
+        # Test stop
+        scheduler.stop()
+        self.assertFalse(scheduler._thread.is_alive())
+
+    def test_scheduler_error_handling(self):
+        settings = CryptoSettings()
+        mock_fetcher = MagicMock()
+        mock_repo = MagicMock()
+
+        # Simulate error in fetcher
+        mock_fetcher.fetch_top_coins.side_effect = Exception("API Error")
+
+        scheduler = CryptoDataScheduler(settings, mock_fetcher, mock_repo)
+
+        # Should not raise exception
+        try:
+            scheduler.refresh_now()
+        except Exception:
+            self.fail("scheduler.refresh_now() raised Exception unexpectedly!")
 
 if __name__ == "__main__":
     unittest.main()

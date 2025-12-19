@@ -7,8 +7,6 @@ Handles background refreshing of crypto data.
 
 import logging
 import threading
-import time
-from typing import Callable
 
 from awesome_cli.config import CryptoSettings
 from awesome_cli.core.crypto.fetcher import CryptoDataFetcher
