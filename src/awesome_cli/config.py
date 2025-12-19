@@ -2,10 +2,13 @@
 Configuration management for Awesome CLI.
 """
 import json
+import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Optional, Type, TypeVar
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar('T')
 
@@ -72,8 +75,8 @@ def load_settings(config_path: Optional[str] = None) -> Settings:
                         # Extract crypto settings
                         if "crypto" in file_data:
                             crypto_defaults.update(file_data["crypto"])
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to load config file {path}: {e}")
 
     # 1. Environment variables override everything
     env = os.getenv("AWESOME_CLI_ENV", defaults.get("env", "production"))
