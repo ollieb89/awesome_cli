@@ -1,0 +1,45 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}All Items{% endblock %}
+
+{% block content %}
+    <h1>All Items</h1>
+
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                <th style="padding: 0.75rem; text-align: left;">Name</th>
+                <th style="padding: 0.75rem; text-align: left;">Status</th>
+                <th style="padding: 0.75rem; text-align: left;">Created</th>
+                <th style="padding: 0.75rem; text-align: left;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 0.75rem;">{{ item.name }}</td>
+                    <td style="padding: 0.75rem;">
+                        <span style="
+                            padding: 0.25rem 0.5rem;
+                            border-radius: 4px;
+                            font-size: 0.8rem;
+                            {% if item.status == 'active' %}background: #d4edda; color: #155724;{% endif %}
+                            {% if item.status == 'draft' %}background: #fff3cd; color: #856404;{% endif %}
+                            {% if item.status == 'archived' %}background: #e2e3e5; color: #383d41;{% endif %}
+                        ">
+                            {{ item.get_status_display }}
+                        </span>
+                    </td>
+                    <td style="padding: 0.75rem;">{{ item.created_at|date:"M d, Y" }}</td>
+                    <td style="padding: 0.75rem;">
+                        <a href="{% url 'inventory:item_detail' item.pk %}">View</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 1rem;">No items available.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

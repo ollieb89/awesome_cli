@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Awesome Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; color: #333; }
+        header { background: #333; color: #fff; padding: 1rem; }
+        nav ul { list-style: none; padding: 0; }
+        nav ul li { display: inline; margin-right: 1rem; }
+        nav a { color: #fff; text-decoration: none; }
+        main { padding: 2rem; max-width: 800px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .footer { text-align: center; margin-top: 2rem; color: #777; font-size: 0.8rem; }
+        .button { display: inline-block; padding: 0.5rem 1rem; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+        .button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{% url 'inventory:home' %}">Home</a></li>
+                <li><a href="{% url 'inventory:item_list' %}">Items</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <div class="footer">
+        <p>&copy; 2024 Awesome Company</p>
+    </div>
+</body>
+</html>
