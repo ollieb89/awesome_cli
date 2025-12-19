@@ -93,7 +93,8 @@ class CryptoAssetRepository:
                 symbol = asset.get("symbol")
                 if symbol:
                     self.assets[symbol] = asset
-        # Auto-save after updates (lock is released before save)
+        # Auto-save after updates
+        # Lock is released before save to avoid holding it during I/O
         self.save()
 
     def get_all(self) -> List[Dict]:
