@@ -2,9 +2,10 @@
 Configuration management for Awesome CLI.
 """
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+
 
 @dataclass
 class Settings:
@@ -13,28 +14,24 @@ class Settings:
     log_level: str = "INFO"
     config_path: Optional[Path] = None
     app_name: str = "AwesomeCLI"
-    
-    # Example specific setting
-    max_retries: int = 3
 
 def load_settings(config_path: Optional[str] = None) -> Settings:
     """
     Load settings from defaults, environment variables, and optional config file.
     
     Priority:
-    1. Config file (if provided and implemented)
+    1. Config file (if provided)
     2. Environment variables (prefixed with AWESOME_CLI_)
     3. Defaults
     """
-    # 1. Start with defaults
+    # Defaults are handled by the Settings dataclass defaults
+
+    # 1. Environment variables override defaults
     env = os.getenv("AWESOME_CLI_ENV", "production")
     log_level = os.getenv("AWESOME_CLI_LOG_LEVEL", "INFO")
     
-    # 2. In a real app, you might load from a JSON/YAML/TOML file here
-    if config_path:
-        # Placeholder for file loading logic
-        # e.g., data = json.load(open(config_path))
-        pass
+    # 2. Config file overrides (if implemented in future)
+    # For now, we just acknowledge the path exists if provided
 
     return Settings(
         env=env,
