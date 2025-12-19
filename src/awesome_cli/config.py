@@ -4,7 +4,7 @@ Configuration management for Awesome CLI.
 import json
 import logging
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Dict, Optional, Type, TypeVar
 
@@ -23,6 +23,18 @@ def get_env_safe(key: str, default: T, cast: Type[T]) -> T:
         return cast(value)
     except (ValueError, TypeError):
         return default
+
+def deep_merge(target: Dict[str, Any], source: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Recursive dict merge.
+    Merged dict is returned (target is modified in place).
+    """
+    for k, v in source.items():
+        if isinstance(v, dict) and k in target and isinstance(target[k], dict):
+            deep_merge(target[k], v)
+        else:
+            target[k] = v
+    return target
 
 @dataclass
 class CryptoSettings:
@@ -52,15 +64,16 @@ def load_settings(config_path: Optional[str] = None) -> Settings:
     Load settings from defaults, environment variables, and optional config file.
     
     Priority:
-    1. Config file (if provided)
-    2. Environment variables (prefixed with AWESOME_CLI_)
+    1. Environment variables (prefixed with AWESOME_CLI_)
+    2. Config file (if provided)
     3. Defaults
     """
-    # Defaults are handled by the Settings dataclass defaults
-    defaults: Dict[str, Any] = {}
-    crypto_defaults: Dict[str, Any] = {}
+    # 1. Start with defaults from Dataclasses
+    base_settings = Settings()
+    # Convert to dict for easier merging
+    settings_dict = asdict(base_settings)
     
-    # 2. Config file overrides (if implemented in future)
+    # 2. Config file overrides
     if config_path:
         path = Path(config_path)
         if path.exists():
@@ -78,26 +91,47 @@ def load_settings(config_path: Optional[str] = None) -> Settings:
             except Exception as e:
                 logger.warning(f"Failed to load config file {path}: {e}")
 
-    # 1. Environment variables override everything
-    env = os.getenv("AWESOME_CLI_ENV", defaults.get("env", "production"))
-    log_level = os.getenv("AWESOME_CLI_LOG_LEVEL", defaults.get("log_level", "INFO"))
+    # 3. Environment variables override everything
 
-    # Crypto environment variables
-    crypto_settings = CryptoSettings(
-        coingecko_api_base_url=os.getenv("AWESOME_CLI_COINGECKO_API_BASE_URL", crypto_defaults.get("coingecko_api_base_url", "https://api.coingecko.com/api/v3")),
-        coingecko_request_timeout=get_env_safe("AWESOME_CLI_COINGECKO_REQUEST_TIMEOUT", crypto_defaults.get("coingecko_request_timeout", 10), int),
-        coingecko_rate_limit_requests=get_env_safe("AWESOME_CLI_COINGECKO_RATE_LIMIT_REQUESTS", crypto_defaults.get("coingecko_rate_limit_requests", 50), int),
-        cache_ttl_minutes=get_env_safe("AWESOME_CLI_CACHE_TTL_MINUTES", crypto_defaults.get("cache_ttl_minutes", 5), int),
-        cache_ttl_metadata_hours=get_env_safe("AWESOME_CLI_CACHE_TTL_METADATA_HOURS", crypto_defaults.get("cache_ttl_metadata_hours", 24), int),
-        scheduler_interval_minutes=get_env_safe("AWESOME_CLI_SCHEDULER_INTERVAL_MINUTES", crypto_defaults.get("scheduler_interval_minutes", 5), int),
-        storage_path=os.getenv("AWESOME_CLI_STORAGE_PATH", crypto_defaults.get("storage_path", "data/crypto_assets.json")),
-        redis_url=os.getenv("AWESOME_CLI_REDIS_URL", crypto_defaults.get("redis_url", None)),
-        use_redis=get_env_safe("AWESOME_CLI_USE_REDIS", crypto_defaults.get("use_redis", False), bool),
+    # Top level settings
+    settings_dict["env"] = os.getenv("AWESOME_CLI_ENV", settings_dict["env"])
+    settings_dict["log_level"] = os.getenv("AWESOME_CLI_LOG_LEVEL", settings_dict["log_level"])
+    settings_dict["config_path"] = Path(config_path) if config_path else None
+
+    # Crypto settings
+    crypto_dict = settings_dict.get("crypto", {})
+
+    # Apply env vars to crypto settings, using current value (from default or file) as default
+    crypto_dict["coingecko_api_base_url"] = os.getenv(
+        "AWESOME_CLI_COINGECKO_API_BASE_URL", crypto_dict["coingecko_api_base_url"]
+    )
+    crypto_dict["coingecko_request_timeout"] = get_env_safe(
+        "AWESOME_CLI_COINGECKO_REQUEST_TIMEOUT", crypto_dict["coingecko_request_timeout"], int
+    )
+    crypto_dict["coingecko_rate_limit_requests"] = get_env_safe(
+        "AWESOME_CLI_COINGECKO_RATE_LIMIT_REQUESTS", crypto_dict["coingecko_rate_limit_requests"], int
+    )
+    crypto_dict["cache_ttl_minutes"] = get_env_safe(
+        "AWESOME_CLI_CACHE_TTL_MINUTES", crypto_dict["cache_ttl_minutes"], int
+    )
+    crypto_dict["cache_ttl_metadata_hours"] = get_env_safe(
+        "AWESOME_CLI_CACHE_TTL_METADATA_HOURS", crypto_dict["cache_ttl_metadata_hours"], int
+    )
+    crypto_dict["scheduler_interval_minutes"] = get_env_safe(
+        "AWESOME_CLI_SCHEDULER_INTERVAL_MINUTES", crypto_dict["scheduler_interval_minutes"], int
+    )
+    crypto_dict["storage_path"] = os.getenv(
+        "AWESOME_CLI_STORAGE_PATH", crypto_dict["storage_path"]
+    )
+    crypto_dict["redis_url"] = os.getenv(
+        "AWESOME_CLI_REDIS_URL", crypto_dict["redis_url"]
+    )
+    crypto_dict["use_redis"] = get_env_safe(
+        "AWESOME_CLI_USE_REDIS", crypto_dict["use_redis"], bool
     )
 
-    return Settings(
-        env=env,
-        log_level=log_level,
-        config_path=Path(config_path) if config_path else None,
-        crypto=crypto_settings
-    )
+    # Reconstruct objects
+    # We must convert the dictionary back to CryptoSettings object
+    settings_dict["crypto"] = CryptoSettings(**crypto_dict)
+
+    return Settings(**settings_dict)
