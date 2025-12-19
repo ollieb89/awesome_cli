@@ -2,10 +2,13 @@
 Configuration management for Awesome CLI.
 """
 import json
+import logging
 import os
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Dict, Optional, Type, TypeVar
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar('T')
 
@@ -78,10 +81,15 @@ def load_settings(config_path: Optional[str] = None) -> Settings:
                 with path.open("r", encoding="utf-8") as f:
                     file_data = json.load(f)
                     if isinstance(file_data, dict):
-                        deep_merge(settings_dict, file_data)
-            except Exception:
-                # In case of error (e.g. invalid JSON), we proceed with defaults
-                pass
+                        # Extract top level settings
+                        for k, v in file_data.items():
+                            if k != "crypto":
+                                defaults[k] = v
+                        # Extract crypto settings
+                        if "crypto" in file_data:
+                            crypto_defaults.update(file_data["crypto"])
+            except Exception as e:
+                logger.warning(f"Failed to load config file {path}: {e}")
 
     # 3. Environment variables override everything
 
