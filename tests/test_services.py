@@ -1,5 +1,6 @@
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+import pytest
 from awesome_cli.core.services import initialize_app_state, run_job
 from awesome_cli.config import load_settings
 from awesome_cli.core.models import JobResult
@@ -75,11 +76,8 @@ def test_initialize_app_state_handles_directory_creation_error(tmp_path):
             mock_ensure.side_effect = PermissionError("Cannot create directory")
             
             # Act & Assert
-            try:
+            with pytest.raises(PermissionError, match="Cannot create directory"):
                 initialize_app_state(settings=settings)
-                assert False, "Expected PermissionError to be raised"
-            except PermissionError as e:
-                assert "Cannot create directory" in str(e)
 
 
 def test_run_job():
