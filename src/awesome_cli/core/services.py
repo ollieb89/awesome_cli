@@ -2,8 +2,10 @@
 Core services and business logic for Awesome CLI.
 """
 import logging
+from pathlib import Path
 from typing import Dict
 
+from awesome_cli import config
 from awesome_cli.core import io
 from awesome_cli.core.models import JobResult
 from awesome_cli.utils.paths import get_app_dir
@@ -16,11 +18,23 @@ def initialize_app_state() -> Dict[str, str]:
     """
     logger.info("Initializing application state...")
 
+    # Load settings to ensure we have the correct paths
+    settings = config.load_settings()
+
     # Ensure config directory exists
     config_path = get_app_dir("awesome_cli")
     io.ensure_directory(config_path)
 
-    return {"status": "initialized", "path": str(config_path.absolute())}
+    # Ensure crypto storage directory exists
+    storage_path = Path(settings.crypto.storage_path)
+    if storage_path.parent:
+        io.ensure_directory(storage_path.parent)
+
+    return {
+        "status": "initialized",
+        "path": str(config_path.absolute()),
+        "storage_path": str(storage_path.parent.absolute())
+    }
 
 def run_job(name: str) -> JobResult:
     """
