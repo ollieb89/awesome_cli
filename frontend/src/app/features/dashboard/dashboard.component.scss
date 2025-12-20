@@ -10,3 +10,56 @@
   flex: 1;
   min-width: 300px;
 }
+
+/* New additions for UX/A11y */
+
+.loading-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 32px;
+  color: #666;
+  text-align: center;
+  font-style: italic;
+
+  mat-icon {
+    font-size: 48px;
+    height: 48px;
+    width: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+}
+
+.inactive-status {
+  color: #757575; /* Grey 600 */
+  font-size: 0.85em;
+  font-weight: 500;
+  display: inline-block;
+  background: #eee;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-top: 4px;
+}
+
+.positive-return {
+  color: #2e7d32; /* Green 800 */
+  font-weight: 500;
+}
+
+.negative-return {
+  color: #c62828; /* Red 800 */
+  font-weight: 500;
+}
+
+/* Hover effects */
+tr.mat-row:hover {
+  background-color: #f5f5f5;
+  cursor: default; /* Or pointer if we add click handlers */
+}
+
+mat-list-item:hover {
+  background-color: #f5f5f5;
+}
