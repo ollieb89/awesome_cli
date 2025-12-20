@@ -24,16 +24,17 @@ def get_env_safe(key: str, default: T, cast: Type[T]) -> T:
     except (ValueError, TypeError):
         return default
 
-def deep_merge(target: Dict[str, Any], source: Dict[str, Any]) -> Dict[str, Any]:
+def _deep_merge_dict(target: Dict[str, Any], source: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Recursive dict merge.
-    Merged dict is returned (target is modified in place).
+    Recursively merge dictionary 'source' into 'target'.
+
+    This function modifies 'target' in place.
     """
-    for k, v in source.items():
-        if isinstance(v, dict) and k in target and isinstance(target[k], dict):
-            deep_merge(target[k], v)
+    for key, value in source.items():
+        if isinstance(value, dict) and key in target and isinstance(target[key], dict):
+            _deep_merge_dict(target[key], value)
         else:
-            target[k] = v
+            target[key] = value
     return target
 
 @dataclass
@@ -81,7 +82,8 @@ def load_settings(config_path: Optional[str] = None) -> Settings:
                 with path.open("r", encoding="utf-8") as f:
                     file_data = json.load(f)
                     if isinstance(file_data, dict):
-                        deep_merge(settings_dict, file_data)
+                        # Perform deep merge to support nested settings
+                        _deep_merge_dict(settings_dict, file_data)
             except Exception as e:
                 logger.warning(f"Failed to load config file {path}: {e}")
 
