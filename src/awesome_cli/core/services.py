@@ -12,7 +12,7 @@ from awesome_cli.utils.paths import get_config_dir, get_data_dir
 
 logger = logging.getLogger(__name__)
 
-def initialize_app_state() -> Dict[str, str]:
+def initialize_app_state(settings: Optional[config.Settings] = None) -> Dict[str, str]:
     """
     Perform initialization tasks (e.g., creating directories, DB init).
     """
@@ -25,6 +25,18 @@ def initialize_app_state() -> Dict[str, str]:
     config_path = get_config_dir("awesome_cli")
     io.ensure_directory(config_path)
 
+    # Ensure crypto storage directory exists
+    crypto_storage_path = Path(settings.crypto.storage_path)
+    # The storage_path includes the filename, so we want the parent directory
+    io.ensure_directory(crypto_storage_path.parent)
+
+    return {
+        "status": "initialized",
+        # Kept for backward compatibility
+        "path": str(config_path.absolute()),
+        "config_path": str(config_path.absolute()),
+        "crypto_storage_path": str(crypto_storage_path.parent.absolute())
+    }
     # Ensure data directory exists
     data_path = get_data_dir("awesome_cli")
     io.ensure_directory(data_path)
