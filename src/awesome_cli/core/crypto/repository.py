@@ -40,9 +40,33 @@ class CryptoAssetRepository:
                     data = json.load(f)
                     # Convert list to dict keyed by symbol for fast lookup
                     if isinstance(data, list):
-                        self.assets = {item["symbol"]: item for item in data}
+                        assets: Dict[str, Dict] = {}
+                        for index, item in enumerate(data):
+                            if not isinstance(item, dict):
+                                logger.warning(
+                                    "Skipping non-dict asset at index %s in %s",
+                                    index,
+                                    self.storage_path,
+                                )
+                                continue
+                            symbol = item.get("symbol")
+                            if not symbol:
+                                logger.warning(
+                                    'Skipping asset without "symbol" at index %s in %s',
+                                    index,
+                                    self.storage_path,
+                                )
+                                continue
+                            assets[symbol] = item
+                        self.assets = assets
                     elif isinstance(data, dict):
                         self.assets = data
+                    else:
+                        logger.warning(
+                            "Unexpected data format in %s: %s",
+                            self.storage_path,
+                            type(data).__name__,
+                        )
             logger.info(f"Loaded {len(self.assets)} assets from {self.storage_path}")
         except Exception as e:
             logger.error(f"Failed to load assets from storage: {e}")
