@@ -1,37 +1,77 @@
-"""
-Tests for core services.
-"""
+
+import os
+import shutil
+import pytest
 from pathlib import Path
 from unittest.mock import patch
-
-from awesome_cli.core import services
+from awesome_cli.core.services import initialize_app_state, run_job
+from awesome_cli.config import load_settings, Settings
 from awesome_cli.core.models import JobResult
 
+def test_initialize_app_state_creates_directories(tmp_path: Path):
+    # Setup
+    # Use tmp_path for isolation
+    test_storage_file = tmp_path / "data" / "crypto_assets.json"
+    fake_config_dir = tmp_path / "config"
 
-def test_initialize_app_state(tmp_path):
-    # Mock get_app_dir to return a temporary directory
-    with patch("awesome_cli.core.services.get_app_dir") as mock_get_app_dir:
-        mock_config_path = tmp_path / "test_config"
-        mock_get_app_dir.return_value = mock_config_path
+    # Mock settings
+    settings = load_settings()
+    settings.crypto.storage_path = str(test_storage_file)
 
-        result = services.initialize_app_state()
+    # Mock get_app_dir to return a temp path
+    with patch("awesome_cli.core.services.get_app_dir", return_value=fake_config_dir):
+        # Act
+        result = initialize_app_state(settings=settings)
 
-        # Verify get_app_dir was called with correct app name
-        mock_get_app_dir.assert_called_once_with("awesome_cli")
+    # Assert
+    assert result["status"] == "initialized"
+    assert "config_path" in result
+    assert "crypto_storage_path" in result
+    # Backward compatibility
+    assert "path" in result
+    assert result["path"] == str(fake_config_dir.absolute())
+    assert result["config_path"] == str(fake_config_dir.absolute())
 
-        # Verify directory was created
-        assert mock_config_path.exists()
-        assert mock_config_path.is_dir()
+    # Verify config dir created
+    assert fake_config_dir.exists()
+    assert fake_config_dir.is_dir()
 
-        # Verify result
-        assert isinstance(result, dict)
-        assert result["status"] == "initialized"
-        assert result["path"] == str(mock_config_path.absolute())
+    # Verify crypto dir created
+    assert test_storage_file.parent.exists()
+    assert test_storage_file.parent.is_dir()
+    assert result["crypto_storage_path"] == str(test_storage_file.parent.absolute())
+
+
+def test_initialize_app_state_defaults(monkeypatch, tmp_path):
+    # Setup env var to point to tmp_path for crypto path
+    test_storage_file = tmp_path / "env_data" / "crypto_assets.json"
+    monkeypatch.setenv("AWESOME_CLI_STORAGE_PATH", str(test_storage_file))
+
+    fake_config_dir = tmp_path / "config"
+
+    # Mock get_app_dir using monkeypatch? patch is easier usually but let's stick to consistent mocking
+    # If using pytest-mock, we could use mocker.patch
+    # Using unittest.mock.patch as context manager
+    with patch("awesome_cli.core.services.get_app_dir", return_value=fake_config_dir):
+        # Act
+        # initialize_app_state loads settings internally if not passed
+        result = initialize_app_state()
+
+    # Assert
+    # Verify config dir created
+    assert fake_config_dir.exists()
+
+    # Verify crypto dir created
+    assert test_storage_file.parent.exists()
+    assert result["crypto_storage_path"] == str(test_storage_file.parent.absolute())
+
 
 def test_run_job():
-    name = "test_job"
-    result = services.run_job(name)
+    """Test the run_job function."""
+    job_name = "test_job"
+    result = run_job(job_name)
+
     assert isinstance(result, JobResult)
-    assert result.job_name == name
+    assert result.job_name == job_name
     assert result.status == "success"
     assert "completed successfully" in result.message
