@@ -2,7 +2,7 @@
 Tests for core services.
 """
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from awesome_cli.core import services
 from awesome_cli.core.models import JobResult
@@ -19,6 +19,11 @@ def test_initialize_app_state(tmp_path):
         mock_get_config_dir.return_value = mock_config_path
         mock_get_data_dir.return_value = mock_data_path
 
+        # Mock settings
+        mock_settings = Mock()
+        mock_settings.crypto.storage_path = str(mock_storage_file)
+        mock_load_settings.return_value = mock_settings
+
         result = services.initialize_app_state()
 
         # Verify calls
@@ -31,10 +36,15 @@ def test_initialize_app_state(tmp_path):
         assert mock_data_path.exists()
         assert mock_data_path.is_dir()
 
+        # Verify storage directory was created
+        assert mock_storage_file.parent.exists()
+        assert mock_storage_file.parent.is_dir()
+
         # Verify result
         assert isinstance(result, dict)
         assert result["status"] == "initialized"
         assert result["path"] == str(mock_config_path.absolute())
+        assert result["storage_path"] == str(mock_storage_file.parent.absolute())
 
 def test_run_job():
     name = "test_job"
