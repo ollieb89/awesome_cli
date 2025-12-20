@@ -2,8 +2,8 @@
 Core services and business logic for Awesome CLI.
 """
 import logging
-from typing import Dict, Optional
 from pathlib import Path
+from typing import Dict, Optional
 
 from awesome_cli import config
 from awesome_cli.core import io

@@ -1,10 +1,13 @@
 
 from pathlib import Path
 from unittest.mock import patch
+
 import pytest
-from awesome_cli.core.services import initialize_app_state, run_job
+
 from awesome_cli.config import load_settings
 from awesome_cli.core.models import JobResult
+from awesome_cli.core.services import initialize_app_state, run_job
+
 
 def test_initialize_app_state_creates_directories(tmp_path: Path):
     # Setup
@@ -67,17 +70,16 @@ def test_initialize_app_state_error_handling(tmp_path):
 
     # Mock get_app_dir to return a temp path
     # And mock io.ensure_directory to raise an exception
-    with patch("awesome_cli.core.services.get_app_dir", return_value=fake_config_dir):
-        with patch("awesome_cli.core.io.ensure_directory", side_effect=PermissionError("Mock permission error")):
+    with patch(
+        "awesome_cli.core.services.get_app_dir", return_value=fake_config_dir
+    ):
+        with patch(
+            "awesome_cli.core.io.ensure_directory",
+            side_effect=PermissionError("Mock permission error"),
+        ):
             # Act & Assert
-            try:
+            with pytest.raises(PermissionError, match="Mock permission error"):
                 initialize_app_state()
-            except PermissionError:
-                # Expected
-                pass
-            except Exception as e:
-                import pytest
-                pytest.fail(f"Caught unexpected exception: {e}")
 
 
 def test_initialize_app_state_handles_directory_creation_error(tmp_path):
