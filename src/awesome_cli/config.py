@@ -7,6 +7,7 @@ import os
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Dict, Optional, Type, TypeVar
+from awesome_cli.utils.paths import get_data_dir
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,8 @@ class CryptoSettings:
     cache_ttl_minutes: int = 5
     cache_ttl_metadata_hours: int = 24
     scheduler_interval_minutes: int = 5
-    storage_path: str = "data/crypto_assets.json"
+    # Default to user data directory
+    storage_path: str = str(get_data_dir("awesome_cli") / "crypto_assets.json")
     redis_url: Optional[str] = None
     use_redis: bool = False
 
