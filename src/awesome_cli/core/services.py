@@ -32,7 +32,8 @@ def initialize_app_state(settings: Optional[config.Settings] = None) -> Dict[str
 
     return {
         "status": "initialized",
-        "path": str(config_path.absolute()), # Kept for backward compatibility
+        # Kept for backward compatibility
+        "path": str(config_path.absolute()),
         "config_path": str(config_path.absolute()),
         "crypto_storage_path": str(crypto_storage_path.parent.absolute())
     }
