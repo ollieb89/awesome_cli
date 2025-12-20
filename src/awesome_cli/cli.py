@@ -9,7 +9,7 @@ from rich.console import Console
 from typing_extensions import Annotated
 
 from awesome_cli import __version__, config, core
-from awesome_cli.utils import setup_logging
+from awesome_cli.utils.logging import setup_logging
 
 app = typer.Typer(
     name="awesome-cli",
