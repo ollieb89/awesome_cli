@@ -33,51 +33,42 @@ def test_initialize_app_state_creates_directories(tmp_path: Path):
     assert fake_config_dir.exists()
     assert fake_config_dir.is_dir()
 
-    # Verify crypto dir created
-    assert test_storage_file.parent.exists()
-    assert test_storage_file.parent.is_dir()
-    assert result["crypto_storage_path"] == str(test_storage_file.parent.absolute())
+def test_initialize_app_state(tmp_path):
+    # Mock get_config_dir and get_data_dir to return temporary directories
+    with patch("awesome_cli.core.services.get_config_dir") as mock_get_config_dir, \
+         patch("awesome_cli.core.services.get_data_dir") as mock_get_data_dir:
+
+        mock_config_path = tmp_path / "test_config"
+        mock_data_path = tmp_path / "test_data"
+
+        mock_get_config_dir.return_value = mock_config_path
+        mock_get_data_dir.return_value = mock_data_path
+
+        # Mock settings
+        mock_settings = Mock()
+        mock_settings.crypto.storage_path = str(mock_storage_file)
+        mock_load_settings.return_value = mock_settings
 
 
-def test_initialize_app_state_defaults(monkeypatch, tmp_path):
-    # Setup env var to point to tmp_path for crypto path
-    test_storage_file = tmp_path / "env_data" / "crypto_assets.json"
-    monkeypatch.setenv("AWESOME_CLI_STORAGE_PATH", str(test_storage_file))
+        # Verify calls
+        mock_get_config_dir.assert_called_once_with("awesome_cli")
+        mock_get_data_dir.assert_called_once_with("awesome_cli")
 
-    fake_config_dir = tmp_path / "config"
+        # Verify directories were created
+        assert mock_config_path.exists()
+        assert mock_config_path.is_dir()
+        assert mock_data_path.exists()
+        assert mock_data_path.is_dir()
 
-    # Mock get_app_dir using unittest.mock.patch for consistency with other tests
-    with patch("awesome_cli.core.services.get_app_dir", return_value=fake_config_dir):
-        # Act
-        # initialize_app_state loads settings internally if not passed
-        result = initialize_app_state()
+        # Verify storage directory was created
+        assert mock_storage_file.parent.exists()
+        assert mock_storage_file.parent.is_dir()
 
-    # Assert
-    # Verify config dir created
-    assert fake_config_dir.exists()
-
-    # Verify crypto dir created
-    assert test_storage_file.parent.exists()
-    assert result["crypto_storage_path"] == str(test_storage_file.parent.absolute())
-
-def test_initialize_app_state_error_handling(tmp_path):
-    # Setup
-    fake_config_dir = tmp_path / "config"
-
-    # Mock get_app_dir to return a temp path
-    # And mock io.ensure_directory to raise an exception
-    with patch("awesome_cli.core.services.get_app_dir", return_value=fake_config_dir):
-        with patch("awesome_cli.core.io.ensure_directory", side_effect=PermissionError("Mock permission error")):
-            # Act & Assert
-            try:
-                initialize_app_state()
-            except PermissionError:
-                # Expected
-                pass
-            except Exception as e:
-                import pytest
-                pytest.fail(f"Caught unexpected exception: {e}")
-
+        # Verify result
+        assert isinstance(result, dict)
+        assert result["status"] == "initialized"
+        assert result["path"] == str(mock_config_path.absolute())
+        assert result["storage_path"] == str(mock_storage_file.parent.absolute())
 
 def test_run_job():
     """Test the run_job function."""

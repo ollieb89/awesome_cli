@@ -9,6 +9,7 @@ Supports in-memory caching with TTL (Time-To-Live).
 import logging
 import threading
 from datetime import datetime, timedelta
+from threading import Lock
 from typing import Any, Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -48,7 +49,10 @@ class CacheManager:
         """
         Store a value in the cache with an optional TTL override.
         """
-        ttl = timedelta(minutes=ttl_minutes) if ttl_minutes is not None else self.default_ttl
+        if ttl_minutes is not None:
+            ttl = timedelta(minutes=ttl_minutes)
+        else:
+            ttl = self.default_ttl
         expiry = datetime.now() + ttl
 
         with self._lock:
