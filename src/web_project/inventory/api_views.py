@@ -1,14 +1,17 @@
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Item
 from .serializers import ItemSerializer
 
 class ItemViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows items to be viewed or edited.
+    Supports Next.js migration via /api/items/<id>/
+    """
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['status']
-    ordering_fields = ['created_at', 'name']
     search_fields = ['name', 'description']
-    # Permission is inherited from defaults (IsAuthenticated), so we don't need to override unless we want specific access.
-    # For this exercise, we'll keep it standard.
+    ordering_fields = ['created_at', 'name']
+    ordering = ['-created_at']

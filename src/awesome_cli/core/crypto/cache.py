@@ -7,6 +7,7 @@ Supports in-memory caching with TTL (Time-To-Live).
 """
 
 import logging
+import threading
 from datetime import datetime, timedelta
 from threading import Lock
 from typing import Any, Dict, Optional, Tuple
@@ -17,13 +18,13 @@ class CacheManager:
     """
     Simple in-memory cache manager with TTL support.
     Can be extended to support Redis or other backends.
-    Thread-safe for concurrent access.
+    Thread-safe.
     """
 
     def __init__(self, ttl_minutes: int = 5):
         self._cache: Dict[str, Tuple[Any, datetime]] = {}
         self.default_ttl = timedelta(minutes=ttl_minutes)
-        self._lock = Lock()
+        self._lock = threading.Lock()
 
     def get(self, key: str) -> Optional[Any]:
         """
@@ -53,8 +54,10 @@ class CacheManager:
         else:
             ttl = self.default_ttl
         expiry = datetime.now() + ttl
+
         with self._lock:
             self._cache[key] = (value, expiry)
+
         logger.debug(f"Cached key: {key} (expires in {ttl})")
 
     def invalidate(self, key: str) -> None:

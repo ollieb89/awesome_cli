@@ -21,9 +21,8 @@ from django.urls import path, include
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("frontend/", include("inventory.urls")),
+    # API v1 (Standard)
     path("api/v1/", include("inventory.api_urls")),
-    # For convenience, redirect root to frontend home, or just include it at root if preferred.
-    # The prompt asked for namespace e.g. frontend:
-    # / -> home/dashboard (via include or redirect)
-    # The prompt said: "Add URL patterns under a clear namespace, e.g. frontend: / -> home/dashboard"
+    # Legacy/Direct API path (for Next.js migration compatibility)
+    path("api/", include("inventory.api_urls")),
 ]

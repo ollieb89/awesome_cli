@@ -16,6 +16,7 @@ Rationale for using CoinGecko:
 """
 
 import logging
+import threading
 import time
 from threading import Lock
 from typing import Any, Dict, List, Optional
@@ -34,7 +35,7 @@ class CryptoDataFetcher:
     """
     Fetcher for cryptocurrency data using CoinGecko API.
     Handles rate limiting, retries, and response parsing.
-    Thread-safe for concurrent requests.
+    Thread-safe rate limiting.
     """
 
     def __init__(self, settings: CryptoSettings):
@@ -47,7 +48,7 @@ class CryptoDataFetcher:
         self.rate_limit_delay = 60.0 / settings.coingecko_rate_limit_requests
         self.session = self._create_session()
         self._last_request_time = 0.0
-        self._rate_limit_lock = Lock()
+        self._lock = threading.Lock()
 
     def _create_session(self) -> requests.Session:
         """Create a requests session with retry logic."""
@@ -65,16 +66,14 @@ class CryptoDataFetcher:
 
     def _wait_for_rate_limit(self):
         """Ensure we respect the rate limit by sleeping if necessary."""
-        with self._rate_limit_lock:
+        with self._lock:
             current_time = time.time()
             elapsed = current_time - self._last_request_time
             if elapsed < self.rate_limit_delay:
                 time.sleep(self.rate_limit_delay - elapsed)
             self._last_request_time = time.time()
 
-    def fetch_top_coins(
-        self, limit: int = 50, currency: str = "usd"
-    ) -> List[Dict[str, Any]]:
+    def fetch_top_coins(self, limit: int = 50, currency: str = "usd") -> List[Dict[str, Any]]:
         """
         Fetch top coins by trading volume.
 

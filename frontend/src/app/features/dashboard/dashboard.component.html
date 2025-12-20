@@ -5,25 +5,46 @@
       <mat-card-title>Recent Backtests</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <table mat-table [dataSource]="backtests$ | async" class="mat-elevation-z1">
-        <ng-container matColumnDef="strategy">
-          <th mat-header-cell *matHeaderCellDef> Strategy </th>
-          <td mat-cell *matCellDef="let b"> {{ b.strategy_name }} </td>
-        </ng-container>
+      <ng-container *ngIf="backtests$ | async as backtests; else loadingBacktests">
+        <ng-container *ngIf="backtests.length > 0; else emptyBacktests">
+          <table mat-table [dataSource]="backtests" class="mat-elevation-z1">
+            <ng-container matColumnDef="strategy">
+              <th mat-header-cell *matHeaderCellDef scope="col"> Strategy </th>
+              <td mat-cell *matCellDef="let b"> {{ b.strategy_name }} </td>
+            </ng-container>
 
-        <ng-container matColumnDef="symbol">
-          <th mat-header-cell *matHeaderCellDef> Symbol </th>
-          <td mat-cell *matCellDef="let b"> {{ b.asset }} </td>
-        </ng-container>
+            <ng-container matColumnDef="symbol">
+              <th mat-header-cell *matHeaderCellDef scope="col"> Symbol </th>
+              <td mat-cell *matCellDef="let b"> {{ b.asset }} </td>
+            </ng-container>
 
-        <ng-container matColumnDef="return">
-          <th mat-header-cell *matHeaderCellDef> Return </th>
-          <td mat-cell *matCellDef="let b"> {{ b.metrics?.total_return | percent:'1.1-2' }} </td>
-        </ng-container>
+            <ng-container matColumnDef="return">
+              <th mat-header-cell *matHeaderCellDef scope="col"> Return </th>
+              <td mat-cell *matCellDef="let b"
+                  [ngClass]="{'positive-return': (b.metrics?.total_return || 0) > 0, 'negative-return': (b.metrics?.total_return || 0) < 0}">
+                {{ b.metrics?.total_return | percent:'1.1-2' }}
+              </td>
+            </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="['strategy', 'symbol', 'return']"></tr>
-        <tr mat-row *matRowDef="let row; columns: ['strategy', 'symbol', 'return'];"></tr>
-      </table>
+            <tr mat-header-row *matHeaderRowDef="['strategy', 'symbol', 'return']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['strategy', 'symbol', 'return'];"></tr>
+          </table>
+        </ng-container>
+      </ng-container>
+
+      <ng-template #loadingBacktests>
+        <div class="loading-state">
+          <mat-icon aria-hidden="true">hourglass_empty</mat-icon>
+          <p>Loading backtests...</p>
+        </div>
+      </ng-template>
+
+      <ng-template #emptyBacktests>
+        <div class="empty-state">
+          <mat-icon aria-hidden="true">history</mat-icon>
+          <p>No recent backtests found.</p>
+        </div>
+      </ng-template>
     </mat-card-content>
   </mat-card>
 
@@ -33,12 +54,30 @@
       <mat-card-title>Active Strategies</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-       <mat-list>
-          <mat-list-item *ngFor="let s of strategies$ | async">
-             <h3 matLine> {{s.name}} </h3>
-             <p matLine> {{s.description}} </p>
-          </mat-list-item>
-       </mat-list>
+      <ng-container *ngIf="strategies$ | async as strategies; else loadingStrategies">
+        <ng-container *ngIf="strategies.length > 0; else emptyStrategies">
+          <mat-list>
+             <mat-list-item *ngFor="let s of strategies">
+                <h3 matLine> {{s.name}} </h3>
+                <p matLine> {{s.description}} </p>
+             </mat-list-item>
+          </mat-list>
+        </ng-container>
+      </ng-container>
+
+      <ng-template #loadingStrategies>
+        <div class="loading-state">
+           <mat-icon aria-hidden="true">hourglass_empty</mat-icon>
+           <p>Loading strategies...</p>
+        </div>
+      </ng-template>
+
+      <ng-template #emptyStrategies>
+        <div class="empty-state">
+          <mat-icon aria-hidden="true">lightbulb_outline</mat-icon>
+          <p>No active strategies.</p>
+        </div>
+      </ng-template>
     </mat-card-content>
   </mat-card>
 
@@ -48,15 +87,33 @@
       <mat-card-title>Top Assets</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <mat-list>
-        <mat-list-item *ngFor="let asset of assets$ | async">
-          <mat-icon matListIcon *ngIf="asset.type === 'crypto'">currency_bitcoin</mat-icon>
-          <mat-icon matListIcon *ngIf="asset.type !== 'crypto'">attach_money</mat-icon>
-          <h3 matLine> {{asset.symbol}} </h3>
-          <p matLine> {{asset.name}} </p>
-          <div mat-line *ngIf="!asset.active" style="color: grey; font-size: small;"> Inactive </div>
-        </mat-list-item>
-      </mat-list>
+      <ng-container *ngIf="assets$ | async as assets; else loadingAssets">
+        <ng-container *ngIf="assets.length > 0; else emptyAssets">
+          <mat-list>
+            <mat-list-item *ngFor="let asset of assets">
+              <mat-icon matListIcon *ngIf="asset.type === 'crypto'" aria-hidden="true">currency_bitcoin</mat-icon>
+              <mat-icon matListIcon *ngIf="asset.type !== 'crypto'" aria-hidden="true">attach_money</mat-icon>
+              <h3 matLine> {{asset.symbol}} </h3>
+              <p matLine> {{asset.name}} </p>
+              <div mat-line *ngIf="!asset.active" class="inactive-status"> Inactive </div>
+            </mat-list-item>
+          </mat-list>
+        </ng-container>
+      </ng-container>
+
+      <ng-template #loadingAssets>
+        <div class="loading-state">
+          <mat-icon aria-hidden="true">hourglass_empty</mat-icon>
+          <p>Loading assets...</p>
+        </div>
+      </ng-template>
+
+      <ng-template #emptyAssets>
+        <div class="empty-state">
+           <mat-icon aria-hidden="true">trending_up</mat-icon>
+           <p>No assets available.</p>
+        </div>
+      </ng-template>
     </mat-card-content>
   </mat-card>
 </div>

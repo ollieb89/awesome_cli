@@ -8,8 +8,10 @@ Currently supports in-memory storage backed by a JSON file for persistence.
 
 import json
 import logging
+import threading
+import os
+import shutil
 from pathlib import Path
-from threading import Lock
 from typing import Dict, List, Optional
 
 from awesome_cli.config import CryptoSettings
@@ -24,7 +26,7 @@ class CryptoAssetRepository:
     def __init__(self, settings: CryptoSettings):
         self.storage_path = Path(settings.storage_path)
         self.assets: Dict[str, Dict] = {}  # Map symbol -> asset data
-        self._lock = Lock()
+        self._lock = threading.RLock()  # Use RLock to allow reentrant acquisition
         self._load_from_storage()
 
     def _load_from_storage(self) -> None:
@@ -70,21 +72,33 @@ class CryptoAssetRepository:
             logger.error(f"Failed to load assets from storage: {e}")
 
     def save(self) -> None:
-        """Persist assets to JSON file."""
+        """
+        Persist assets to JSON file using atomic write.
+        """
         try:
             # Ensure directory exists
             self.storage_path.parent.mkdir(parents=True, exist_ok=True)
 
             with self._lock:
-                # Create a snapshot of the assets inside the lock
-                assets_snapshot = list(self.assets.values())
-            
-            # Write to file outside the lock to avoid holding it during I/O
-            with self.storage_path.open("w", encoding="utf-8") as f:
-                json.dump(assets_snapshot, f, indent=2)
-            logger.info(f"Saved {len(assets_snapshot)} assets to {self.storage_path}")
+                assets_list = list(self.assets.values())
+
+            # Atomic write: write to temp file then move
+            temp_path = self.storage_path.with_suffix(".tmp")
+            with temp_path.open("w", encoding="utf-8") as f:
+                json.dump(assets_list, f, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+
+            shutil.move(str(temp_path), str(self.storage_path))
+
+            logger.info(f"Saved {len(assets_list)} assets to {self.storage_path}")
         except Exception as e:
             logger.error(f"Failed to save assets to storage: {e}")
+            if 'temp_path' in locals() and temp_path.exists():
+                try:
+                    temp_path.unlink()
+                except Exception:
+                    pass
 
     def upsert(self, assets: List[Dict]) -> None:
         """Update or insert a list of assets."""
@@ -93,9 +107,9 @@ class CryptoAssetRepository:
                 symbol = asset.get("symbol")
                 if symbol:
                     self.assets[symbol] = asset
-        # Auto-save after updates
-        # Lock is released before save to avoid holding it during I/O
-        self.save()
+            # Auto-save after updates. RLock allows save() to re-acquire the lock if needed,
+            # but we changed save() to acquire lock internally for just the read.
+            self.save()
 
     def get_all(self) -> List[Dict]:
         """Get all assets."""

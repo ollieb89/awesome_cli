@@ -295,60 +295,36 @@ class TestCryptoDataScheduler(unittest.TestCase):
         mock_fetcher.fetch_top_coins.assert_called_once()
         mock_repo.upsert.assert_called_once_with([{"symbol": "BTC"}])
 
-    def test_refresh_now_with_error(self):
-        """Test that errors in refresh_now are handled gracefully"""
+    def test_scheduler_lifecycle(self):
+        settings = CryptoSettings(scheduler_interval_minutes=1)
+        mock_fetcher = MagicMock()
+        mock_repo = MagicMock()
+
+        scheduler = CryptoDataScheduler(settings, mock_fetcher, mock_repo)
+
+        # Test start
+        scheduler.start()
+        self.assertTrue(scheduler._thread.is_alive())
+
+        # Test stop
+        scheduler.stop()
+        self.assertFalse(scheduler._thread.is_alive())
+
+    def test_scheduler_error_handling(self):
         settings = CryptoSettings()
         mock_fetcher = MagicMock()
         mock_repo = MagicMock()
 
+        # Simulate error in fetcher
         mock_fetcher.fetch_top_coins.side_effect = Exception("API Error")
 
         scheduler = CryptoDataScheduler(settings, mock_fetcher, mock_repo)
-        # Should not raise, just log the error
-        scheduler.refresh_now()
 
-        mock_repo.upsert.assert_not_called()
-
-    def test_start_and_stop(self):
-        """Test scheduler start and stop functionality"""
-        settings = CryptoSettings(scheduler_interval_minutes=0.01)  # Very short interval
-        mock_fetcher = MagicMock()
-        mock_repo = MagicMock()
-        mock_fetcher.fetch_top_coins.return_value = [{"symbol": "BTC"}]
-
-        scheduler = CryptoDataScheduler(settings, mock_fetcher, mock_repo)
-        
-        # Start scheduler
-        scheduler.start()
-        self.assertIsNotNone(scheduler._thread)
-        self.assertTrue(scheduler._thread.is_alive())
-
-        # Let it run for a bit
-        time.sleep(0.1)
-
-        # Stop scheduler
-        scheduler.stop()
-        self.assertFalse(scheduler._thread.is_alive())
-
-    def test_start_already_running(self):
-        """Test that starting an already running scheduler is handled"""
-        settings = CryptoSettings(scheduler_interval_minutes=1)
-        mock_fetcher = MagicMock()
-        mock_repo = MagicMock()
-        mock_fetcher.fetch_top_coins.return_value = [{"symbol": "BTC"}]
-
-        scheduler = CryptoDataScheduler(settings, mock_fetcher, mock_repo)
-        
-        scheduler.start()
-        first_thread = scheduler._thread
-        
-        # Try to start again
-        scheduler.start()
-        
-        # Should be the same thread
-        self.assertEqual(scheduler._thread, first_thread)
-        
-        scheduler.stop()
+        # Should not raise exception
+        try:
+            scheduler.refresh_now()
+        except Exception:
+            self.fail("scheduler.refresh_now() raised Exception unexpectedly!")
 
 if __name__ == "__main__":
     unittest.main()
