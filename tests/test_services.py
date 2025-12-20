@@ -1,11 +1,7 @@
-
-import os
-import shutil
-import pytest
 from pathlib import Path
 from unittest.mock import patch
 from awesome_cli.core.services import initialize_app_state, run_job
-from awesome_cli.config import load_settings, Settings
+from awesome_cli.config import load_settings
 from awesome_cli.core.models import JobResult
 
 def test_initialize_app_state_creates_directories(tmp_path: Path):
@@ -49,9 +45,7 @@ def test_initialize_app_state_defaults(monkeypatch, tmp_path):
 
     fake_config_dir = tmp_path / "config"
 
-    # Mock get_app_dir using monkeypatch? patch is easier usually but let's stick to consistent mocking
-    # If using pytest-mock, we could use mocker.patch
-    # Using unittest.mock.patch as context manager
+    # Mock get_app_dir using unittest.mock.patch for consistency with other tests
     with patch("awesome_cli.core.services.get_app_dir", return_value=fake_config_dir):
         # Act
         # initialize_app_state loads settings internally if not passed
