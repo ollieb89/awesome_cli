@@ -29,6 +29,10 @@ def _deep_merge_dict(target: Dict[str, Any], source: Dict[str, Any]) -> Dict[str
     Recursively merge dictionary 'source' into 'target'.
 
     This function modifies 'target' in place.
+
+    Returns:
+        Dict[str, Any]: The modified ``target`` dictionary after merging, returned
+            for convenience.
     """
     for key, value in source.items():
         if isinstance(value, dict) and key in target and isinstance(target[key], dict):
