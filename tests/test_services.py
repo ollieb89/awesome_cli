@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from awesome_cli.core.services import initialize_app_state, run_job
 from awesome_cli.config import load_settings
 from awesome_cli.core.models import JobResult
@@ -58,6 +58,28 @@ def test_initialize_app_state_defaults(monkeypatch, tmp_path):
     # Verify crypto dir created
     assert test_storage_file.parent.exists()
     assert result["crypto_storage_path"] == str(test_storage_file.parent.absolute())
+
+
+def test_initialize_app_state_handles_directory_creation_error(tmp_path):
+    """Test that errors during directory creation are properly propagated."""
+    # Setup
+    fake_config_dir = tmp_path / "config"
+    test_storage_file = tmp_path / "data" / "crypto_assets.json"
+    
+    settings = load_settings()
+    settings.crypto.storage_path = str(test_storage_file)
+    
+    # Mock ensure_directory to raise an exception
+    with patch("awesome_cli.core.services.get_app_dir", return_value=fake_config_dir):
+        with patch("awesome_cli.core.services.io.ensure_directory") as mock_ensure:
+            mock_ensure.side_effect = PermissionError("Cannot create directory")
+            
+            # Act & Assert
+            try:
+                initialize_app_state(settings=settings)
+                assert False, "Expected PermissionError to be raised"
+            except PermissionError as e:
+                assert "Cannot create directory" in str(e)
 
 
 def test_run_job():
