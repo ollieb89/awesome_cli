@@ -1,3 +1,4 @@
+
 from pathlib import Path
 from unittest.mock import patch
 import pytest
@@ -59,6 +60,24 @@ def test_initialize_app_state_defaults(monkeypatch, tmp_path):
     # Verify crypto dir created
     assert test_storage_file.parent.exists()
     assert result["crypto_storage_path"] == str(test_storage_file.parent.absolute())
+
+def test_initialize_app_state_error_handling(tmp_path):
+    # Setup
+    fake_config_dir = tmp_path / "config"
+
+    # Mock get_app_dir to return a temp path
+    # And mock io.ensure_directory to raise an exception
+    with patch("awesome_cli.core.services.get_app_dir", return_value=fake_config_dir):
+        with patch("awesome_cli.core.io.ensure_directory", side_effect=PermissionError("Mock permission error")):
+            # Act & Assert
+            try:
+                initialize_app_state()
+            except PermissionError:
+                # Expected
+                pass
+            except Exception as e:
+                import pytest
+                pytest.fail(f"Caught unexpected exception: {e}")
 
 
 def test_initialize_app_state_handles_directory_creation_error(tmp_path):
