@@ -9,14 +9,15 @@ from awesome_cli.core.models import JobResult
 
 
 def test_initialize_app_state(tmp_path):
-    # Mock get_app_dir to return a temporary directory
-    mock_config_path = tmp_path / "test_config"
-    mock_storage_file = tmp_path / "data" / "crypto_assets.json"
+    # Mock get_config_dir and get_data_dir to return temporary directories
+    with patch("awesome_cli.core.services.get_config_dir") as mock_get_config_dir, \
+         patch("awesome_cli.core.services.get_data_dir") as mock_get_data_dir:
 
-    with patch("awesome_cli.core.services.get_app_dir") as mock_get_app_dir, \
-         patch("awesome_cli.core.services.config.load_settings") as mock_load_settings:
+        mock_config_path = tmp_path / "test_config"
+        mock_data_path = tmp_path / "test_data"
 
-        mock_get_app_dir.return_value = mock_config_path
+        mock_get_config_dir.return_value = mock_config_path
+        mock_get_data_dir.return_value = mock_data_path
 
         # Mock settings
         mock_settings = Mock()
@@ -25,12 +26,15 @@ def test_initialize_app_state(tmp_path):
 
         result = services.initialize_app_state()
 
-        # Verify get_app_dir was called with correct app name
-        mock_get_app_dir.assert_called_once_with("awesome_cli")
+        # Verify calls
+        mock_get_config_dir.assert_called_once_with("awesome_cli")
+        mock_get_data_dir.assert_called_once_with("awesome_cli")
 
-        # Verify config directory was created
+        # Verify directories were created
         assert mock_config_path.exists()
         assert mock_config_path.is_dir()
+        assert mock_data_path.exists()
+        assert mock_data_path.is_dir()
 
         # Verify storage directory was created
         assert mock_storage_file.parent.exists()
