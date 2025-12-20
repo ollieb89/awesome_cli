@@ -32,7 +32,7 @@ def _deep_merge_dict(target: Dict[str, Any], source: Dict[str, Any]) -> Dict[str
 
     Returns:
         Dict[str, Any]: The modified ``target`` dictionary after merging, returned
-            for convenience.
+        for convenience.
     """
     for key, value in source.items():
         if isinstance(value, dict) and key in target and isinstance(target[key], dict):
