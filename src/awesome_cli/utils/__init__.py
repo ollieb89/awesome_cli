@@ -1,7 +1,8 @@
 """
-Utilities for Awesome CLI.
+Utilities package.
 """
-from awesome_cli.utils.logging import setup_logging
-from awesome_cli.utils.paths import get_app_dir, get_project_root
+# We do not import setup_logging here to avoid circular imports if logging imports config.
+# If setup_logging is needed, import it from awesome_cli.utils.logging directly.
+from awesome_cli.utils.paths import get_config_dir, get_data_dir, get_project_root
 
-__all__ = ["setup_logging", "get_project_root", "get_app_dir"]
+__all__ = ["get_project_root", "get_config_dir", "get_data_dir"]
