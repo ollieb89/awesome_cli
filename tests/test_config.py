@@ -69,7 +69,7 @@ def test_deep_merge_dict_override_non_dict_with_dict():
 
 
 def test_deep_merge_dict_multiple_levels():
-    """Test merging multiple levels deep (3+ levels)."""
+    """Test merging multiple nested levels (4 levels deep)."""
     target = {
         "level1": {
             "level2": {
