@@ -14,7 +14,12 @@ logger = logging.getLogger(__name__)
 
 def initialize_app_state(settings: Optional[config.Settings] = None) -> Dict[str, str]:
     """
-    Perform initialization tasks (e.g., creating directories, DB init).
+    Perform initialization tasks.
+
+    Ensures that the following directories exist:
+    - Configuration directory
+    - Data directory
+    - Crypto storage directory parent
 
     Args:
         settings: Optional settings object. If not provided, settings will be loaded.
@@ -30,10 +35,12 @@ def initialize_app_state(settings: Optional[config.Settings] = None) -> Dict[str
 
     # Ensure config directory exists
     config_path = get_config_dir("awesome_cli")
+    logger.debug(f"Ensuring config directory: {config_path}")
     io.ensure_directory(config_path)
 
     # Ensure data directory exists
     data_path = get_data_dir("awesome_cli")
+    logger.debug(f"Ensuring data directory: {data_path}")
     io.ensure_directory(data_path)
 
     # Ensure crypto storage directory exists
