@@ -83,7 +83,7 @@ def load_settings(config_path: Optional[str] = None) -> Settings:
                     if isinstance(file_data, dict):
                         deep_merge(settings_dict, file_data)
             except Exception as e:
-                logger.warning(f"Failed to load config file {path}: {e}")
+                logger.warning(f"Failed to load config file {path}: {e}", exc_info=True)
 
     # 3. Environment variables override everything
 
